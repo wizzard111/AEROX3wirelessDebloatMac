@@ -10,6 +10,8 @@ The device protocol is based on the open-source [rivalcfg](https://github.com/fl
 
 ## Install
 
+> **New to this?** Follow [HOW-TO-INSTALL.txt](HOW-TO-INSTALL.txt), a simple step-by-step guide. It is also included in the download.
+
 1. Download `AeroxLite-macos-arm64.zip` from **Releases** (Apple Silicon), unzip it and move **Aerox Lite.app** to Applications.
 2. The app is not notarized by Apple. On first launch, right-click it and choose **Open**, then confirm. If macOS still blocks it, open **System Settings → Privacy & Security** and click **Open Anyway**.
 3. For macros, multi-click and smart lighting, allow Aerox Lite in **System Settings → Privacy & Security** under both **Input Monitoring** and **Accessibility**, then restart the app.

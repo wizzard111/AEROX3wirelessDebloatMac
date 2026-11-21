@@ -40,7 +40,10 @@ jobs:
         run: |
           # Ad-hoc signature: required on Apple Silicon, not a Developer ID (Gatekeeper still asks once).
           codesign --force --deep --sign - "dist/Aerox Lite.app"
-          ditto -c -k --keepParent "dist/Aerox Lite.app" AeroxLite-macos-arm64.zip
+          mkdir -p "pkg/Aerox Lite"
+          ditto "dist/Aerox Lite.app" "pkg/Aerox Lite/Aerox Lite.app"
+          cp HOW-TO-INSTALL.txt LICENSE "pkg/Aerox Lite/"
+          ditto -c -k --keepParent "pkg/Aerox Lite" AeroxLite-macos-arm64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
