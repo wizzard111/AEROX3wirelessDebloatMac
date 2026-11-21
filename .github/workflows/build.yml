@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # Apple Silicon runner; Intel Macs can run from source (see README).
+    runs-on: macos-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Run tests
+        run: python -X utf8 -m unittest discover -s tests -v
+
+      - name: Build app
+        run: python -X utf8 -m PyInstaller --clean --noconfirm AeroxLite.spec
+
+      - name: Package
+        run: |
+          # Ad-hoc signature: required on Apple Silicon, not a Developer ID (Gatekeeper still asks once).
+          codesign --force --deep --sign - "dist/Aerox Lite.app"
+          ditto -c -k --keepParent "dist/Aerox Lite.app" AeroxLite-macos-arm64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AeroxLite-macos-arm64
+          path: AeroxLite-macos-arm64.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AeroxLite-macos-arm64.zip
+          body_path: CHANGELOG.md
