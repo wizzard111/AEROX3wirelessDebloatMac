@@ -236,8 +236,6 @@ def restyle(root, old):
     while stack:
         w = stack.pop()
         if isinstance(w, (Pill, Switch, ColorDot)):
-            if isinstance(w, ColorDot) and w._color.lower() in vmap:  # a swatch showing a theme colour ("off")
-                w._color = vmap[w._color.lower()]
             w.redraw()
             continue
         for opt in _COLOR_OPTS:
@@ -364,11 +362,16 @@ class ColorDot(tk.Label):
 
     def __init__(self, parent, color="#ffffff", size=30, command=None):
         super().__init__(parent, bd=0, highlightthickness=0, cursor="hand2" if command else "")
-        self._color, self._size = color, size
+        self._color, self._size, self._theme_key = color, size, None
         if command: self.bind("<Button-1>", lambda e: command())
         self._draw()
 
+    def show_theme(self, key):
+        """Show a palette colour (e.g. "LINE" for "off") that follows the theme, unlike a chosen colour."""
+        self._theme_key = key; self._color = PAL[key]; self._draw()
+
     def redraw(self):
+        if self._theme_key: self._color = PAL[self._theme_key]
         self._draw()
 
     def _draw(self):
@@ -379,7 +382,7 @@ class ColorDot(tk.Label):
         super().configure(image=self._img, bg=bg)
 
     def configure(self, cnf=None, **kw):
-        if "bg" in kw:
-            self._color = kw.pop("bg"); self._draw()
+        if "bg" in kw:   # a chosen colour: stays as it is when the theme changes
+            self._color = kw.pop("bg"); self._theme_key = None; self._draw()
         if kw or cnf: return super().configure(cnf, **kw)
     config = configure

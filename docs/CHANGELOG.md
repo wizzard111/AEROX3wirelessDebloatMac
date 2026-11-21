@@ -1,5 +1,10 @@
 # Changelog
 
+## V5.0.2
+- Fixed: after switching from the light to the dark theme, colour swatches set to white were drawn
+  dark on the Lighting tab until the app was restarted. Only swatches that show a theme colour (an
+  "off" reactive colour) follow the theme now; the colours you choose never change.
+
 ## V5.0.1
 
 ### Highlights

@@ -30,7 +30,8 @@ class InPlaceTests(unittest.TestCase):
         self.mb = tk.Menubutton(self.card, bg=P["BTN"], fg=P["FG"], activebackground=P["HOV"]); self.mb.pack()
         self.pill = ui_theme.Pill(self.card, "Save", lambda: None, kind="primary"); self.pill.pack()
         self.sw = ui_theme.Switch(self.card, None, on=True); self.sw.pack()
-        self.dot = ui_theme.ColorDot(self.card, P["LINE"], 20); self.dot.pack()
+        self.dot = ui_theme.ColorDot(self.card, P["LINE"], 20); self.dot.show_theme("LINE"); self.dot.pack()
+        self.zone = ui_theme.ColorDot(self.card, "#ffffff", 20); self.zone.pack()   # a colour the user chose
         self.spacer = ui_theme.sized(tk.Frame(self.card), height=12); self.spacer.pack()
 
     def tearDown(self):
@@ -46,7 +47,15 @@ class InPlaceTests(unittest.TestCase):
         self.assertEqual(self.mb.cget("bg").upper(), L["BTN"])
         self.assertEqual(self.mb.cget("activebackground").upper(), L["HOV"])   # same dark colour as LINE
         self.assertEqual(self.dot._color.upper(), L["LINE"])                  # "off" swatch follows the theme
+        self.assertEqual(self.zone._color.lower(), "#ffffff")                  # a chosen colour never changes
         self.assertEqual(self.pill.cget("bg").upper(), L["PANEL"])
+
+    def test_chosen_white_survives_light_to_dark(self):
+        """#FFFFFF is also the light theme's card colour: it must not be taken for a theme colour."""
+        ui_theme.set_theme("light"); self.zone.config(bg="#ffffff")
+        old = dict(ui_theme.PAL); ui_theme.set_theme("dark"); ui_theme.restyle(self.top, old)
+        self.assertEqual(self.zone._color.lower(), "#ffffff")
+        self.assertEqual(self.dot._color.upper(), ui_theme.PALETTES["dark"]["LINE"])
 
     def test_rescale_redraws_sizes(self):
         w0 = self.pill._img.width(); h0 = int(self.spacer.cget("height"))

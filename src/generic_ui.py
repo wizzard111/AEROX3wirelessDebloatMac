@@ -546,12 +546,15 @@ class GenericView:
         cur = self.values.get(s["name"], s.get("default"))
         off = cur == "off"
         dot = ColorDot(row, generic.color_hex(None if off else cur, P("LINE")), 22, None)
+        if off: dot.show_theme("LINE")
         last = {"c": generic.color_hex(None if off else cur, "#ffffff")}
         def flip():
             now = self.values.get(s["name"], s.get("default"))
             if now == "off": v = last["c"]; on = True
             else: last["c"] = generic.color_hex(now, "#ffffff"); v = "off"; on = False
-            sw.set(on); dot.config(bg=v if on else P("LINE")); self.set(s["name"], v)
+            sw.set(on); self.set(s["name"], v)
+            if on: dot.config(bg=v)
+            else: dot.show_theme("LINE")
         def pick():
             c = colorchooser.askcolor(color=last["c"], parent=row.winfo_toplevel(), title=s["label"])[1]
             if c: last["c"] = c; dot.config(bg=c); sw.set(True); self.set(s["name"], c)
