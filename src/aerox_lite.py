@@ -23,7 +23,6 @@ except ImportError as _hidraw_error:
     except ImportError as e:
         raise SystemExit("Aerox Lite: the HID library could not be loaded ({0}; {1}). "
                          "If you built it yourself, rebuild with ./build.sh.".format(_hidraw_error, e))
-import pystray
 import io, base64
 from PIL import Image, ImageDraw, ImageFont, ImageTk, ImageChops, ImageFilter
 
@@ -1776,6 +1775,13 @@ class App:
 
     # ---------- tray
     def _make_tray(self):
+        try:
+            import pystray  # here, not at start-up: on Linux importing it connects to the X server
+        except Exception as e:
+            self.tray = None
+            self.log('Tray icon unavailable ({0}); closing the window minimizes it'.format(e), True)
+            return
+
         def dpi_items():
             items = []
             for i, v in enumerate(self.cfg["dpi"]):
@@ -2023,8 +2029,12 @@ def self_test():
     assert models > 50, models
     import model_art  # pictures of the other mice
     for data in model_art.ART.values(): Image.open(io.BytesIO(base64.b64decode("".join(data)))).load()
-    print("Aerox Lite self-test: OK ({m} mouse models; HID backend: {0}, input: {1}, {2})".format(
-        hid.__name__, "ok" if osinput else "unavailable", osplatform.NAME, m=models))
+    tray = "skipped (no display)"   # a build server has no display; pystray needs one on Linux
+    if sys.platform == "darwin" or os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+        import pystray  # noqa: F401
+        tray = "ok"
+    print("Aerox Lite self-test: OK ({m} mouse models; HID backend: {0}, input: {1}, tray: {t}, {2})".format(
+        hid.__name__, "ok" if osinput else "unavailable", osplatform.NAME, m=models, t=tray))
 
 
 def _enable_crash_log():
