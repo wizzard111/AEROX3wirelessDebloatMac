@@ -6,10 +6,13 @@ import subprocess
 import sys
 
 NAME = "macOS"
+# Exit right after saving: the Tk/Cocoa/pystray teardown at exit can crash on macOS.
+FAST_EXIT = True
 APP_DIR = os.path.expanduser("~/Library/Application Support/AeroxLite")
 
 # Tk on macOS renders point sizes smaller than on Windows, hence the size delta.
 FONT = "Helvetica Neue"
+MONO = "Menlo"
 FONT_SIZE_DELTA = 3
 TRAY_FONTS = ("/System/Library/Fonts/Supplemental/Arial Bold.ttf", "/Library/Fonts/Arial Bold.ttf",
               "/System/Library/Fonts/Helvetica.ttc", "Arial Bold.ttf")
@@ -79,6 +82,51 @@ def gg_running():
         return r.returncode == 0
     except Exception:
         return False
+
+
+def display_scale(root, tk_scaling):
+    """macOS renders Tk in points, so Retina screens need no correction.
+    AEROX_SCALE=1.5 (or another factor) still allows a manual override."""
+    try:
+        v = float(os.environ.get("AEROX_SCALE", ""))
+        return max(0.5, min(4.0, v)) if v > 0 else None
+    except ValueError:
+        return None
+
+
+def input_permissions(prompt=False):
+    """(input_monitoring, accessibility): True/False, or None if unknown.
+    prompt=True makes macOS show its own permission dialogs for this app (only the user can grant them;
+    a script cannot, and permissions belong to the app that asks)."""
+    import ctypes
+    im = ax = None
+    try:  # Input Monitoring: IOHIDCheckAccess / IOHIDRequestAccess (macOS 10.15+)
+        iokit = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/IOKit.framework/IOKit")
+        iokit.IOHIDCheckAccess.argtypes = iokit.IOHIDRequestAccess.argtypes = [ctypes.c_uint32]
+        iokit.IOHIDCheckAccess.restype, iokit.IOHIDRequestAccess.restype = ctypes.c_uint32, ctypes.c_bool
+        LISTEN_EVENT, GRANTED = 1, 0
+        im = iokit.IOHIDCheckAccess(LISTEN_EVENT) == GRANTED
+        if not im and prompt: im = bool(iokit.IOHIDRequestAccess(LISTEN_EVENT))
+    except Exception:
+        pass
+    try:  # Accessibility: needed to send keys/clicks (macros, multi-click)
+        from ApplicationServices import AXIsProcessTrustedWithOptions, kAXTrustedCheckOptionPrompt
+        ax = bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: bool(prompt)}))
+    except Exception:
+        try:
+            hi = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")
+            hi.AXIsProcessTrusted.restype = ctypes.c_bool
+            ax = bool(hi.AXIsProcessTrusted())
+        except Exception:
+            pass
+    return im, ax
+
+
+def open_privacy_settings():
+    """Open the Privacy & Security panes the user has to switch on."""
+    for pane in ("Privacy_ListenEvent", "Privacy_Accessibility"):
+        try: subprocess.Popen(["open", f"x-apple.systempreferences:com.apple.preference.security?{pane}"])
+        except OSError: pass
 
 
 def tray_available():

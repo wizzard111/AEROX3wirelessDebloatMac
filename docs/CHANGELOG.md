@@ -1,5 +1,81 @@
 # Changelog
 
+## V5.0.1
+
+### Highlights
+- **65 more SteelSeries mice.** Rival, Sensei, Prime, Aerox 5 / 9, Kana and Kinzu models (76 USB IDs)
+  are recognised automatically and get the same window as the Aerox 3, with a picture of your model.
+  Nothing extra to download. See "Supported mice" in the README.
+- **New look** with a light and a dark theme, an interface size control and small animations.
+- **Fixed on macOS:** the app no longer quits unexpectedly when you close it, turn on the mouse
+  sensor log or use a macro (macOS 14 and later, including macOS 26).
+
+### Other SteelSeries mice
+- Found by their USB ID, from the open device descriptions of
+  [rivalcfg](https://github.com/flozz/rivalcfg); the Aerox 3 Wireless keeps its own full-featured code.
+- Window built for each model: buttons on the left, a picture of the mouse with its lit zones in your
+  colours in the middle, and the Settings, Lighting and Modules tabs on the right.
+- Button remapping on 47 models: another button, CPI switch, scroll, a keyboard key, a media key or a
+  macro.
+- CPI levels or presets, polling rate, every colour zone with "Set all", lighting effects, reactive
+  colour.
+- Wireless mice show the battery level and forecast and the sleep / dim timers; wired mice show a short
+  summary instead.
+- Settings are remembered per model and sent again on connect.
+
+### Look and feel
+- Rounded cards, switches, pill buttons and tabs, round colour swatches, an app icon, clearer button
+  names (Left button -> Left click), a battery indicator and a connection chip in the header.
+- Light and dark theme: the switch at the top left changes it at once; the choice is saved.
+- Interface size: A- / A+ at the top right scale text, buttons and the mouse picture (50-200%, limited
+  by the screen); HiDPI screens are detected.
+- The window never squeezes its content: columns cannot slide over the mouse picture, and the right
+  column keeps one width for all tabs.
+- Activity shows the last two events; the full log opens on demand.
+- Small animations, only while something changes: switches slide, the theme switch slides before the
+  colours change, and a new colour fades in on the mouse picture.
+
+### Faster and leaner
+- Near-zero background cost: threads and the window sleep until something happens (idle wakeups
+  ~47/s -> under 1/s); the mouse picture is redrawn only when it changes and only while visible.
+- The keyboard and mouse event taps run only while a feature needs them (macros, multi-click, smart
+  lighting, the visible sensor log); multi-click shares the app's listener.
+- Theme and interface size change in place (theme ~0.8 s -> ~0.2 s); switching tabs takes ~20 ms.
+- At login the app starts in the menu bar and builds its window only when first opened
+  (~0.65 s -> ~0.1 s of start-up work).
+- rivalcfg and the pictures of other mice load only when such a mouse is plugged in; one USB scan per
+  check; unplugging a mouse is noticed at once.
+- Smaller app: unused image codecs, colour management, OpenSSL and Tcl time-zone data are left out;
+  bytecode is optimised.
+
+### macOS
+- Fixed: quitting (menu bar Quit, Cmd+Q or the power button) could end with "Aerox Lite quit
+  unexpectedly". Settings are saved first, then the app exits without the Tk/Cocoa teardown that
+  crashed.
+- Fixed: turning on the mouse sensor log, or a macro waiting for its key, made the app quit on recent
+  macOS. The macro keys F13-F20 are now read by key code only, and the keyboard that plays macros is
+  prepared on the main thread.
+- The sensor log is for one session: it is always off when the app starts.
+- The app asks for Input Monitoring and Accessibility with the system dialogs on first launch, and
+  again when a feature that needs them is turned on.
+- A hard crash, if one ever happens, is written to crash.log in the app folder.
+
+### Install and uninstall
+- "Install Aerox Lite.command" for any Mac, Intel included: finds or installs Python, builds and
+  checks the app, opens a drag-to-Applications window and starts the app. Releases ship a disk image
+  (AeroxLite-macos-arm64.dmg).
+- "Uninstall Aerox Lite.command" removes the app, its login item and its permissions, and asks whether
+  to remove only the app or everything (settings and the downloaded folder too).
+- HOW-TO-INSTALL.txt: a step-by-step guide, included in the download.
+- The repository root and the download hold only the installer, the uninstaller and the guide.
+
+### Smaller fixes
+- When the mouse cannot be opened, the log says why (no SteelSeries device, wrong interface, or the
+  exact error with a permission hint).
+- Saving or deleting a macro no longer leaks the old button menus; a failing input callback no longer
+  stops the listener; the SteelSeries GG check no longer delays start-up.
+- Every build is self-tested before it is packaged.
+
 ## V5 — macOS edition
 - First macOS release, ported from the Windows V5 edition. Same device protocol, UI and config format.
 - Macro trigger keys F13–F20 and mouse input are captured with pynput (Quartz event taps); injected

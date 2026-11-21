@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'src'))
 import osinput
 import osplatform
 
@@ -40,18 +40,38 @@ class ListenerTests(unittest.TestCase):
     def make(self):
         self.moves, self.keys, self.buttons = [], [], []
         lst = osinput.InputListener(lambda: self.moves.append(1), lambda c, d: self.keys.append((c, d)),
-                                    on_button=lambda b, d: self.buttons.append((b, d)))
-        lst._fkeys = {0x69: 0, 0x6B: 1}  # f13, f14 (filled from pynput in run())
+                                    on_button=lambda b, d, t=None: self.buttons.append((b, d)))
         return lst
 
-    def test_macro_keys_and_injected_events(self):
+    def test_macro_keys_from_key_codes(self):
+        """KeyTap passes real key presses as macOS key codes (injected ones never reach here)."""
         lst = self.make(); lst.stats_on = True
-        f14 = types.SimpleNamespace(vk=0x6B)
-        lst._on_press(f14, False)
-        lst._on_release(f14, False)
-        lst._on_press(f14, True)                                  # injected: ignored
-        lst._on_press(types.SimpleNamespace(vk=0x00), False)      # 'a': ignored
-        self.assertEqual(self.keys, [(osinput.VK_F13 + 1, True), (osinput.VK_F13 + 1, False)])
+        lst._on_keycode(0x6B, True)        # F14
+        lst._on_keycode(0x6B, False)
+        lst._on_keycode(0x00, True)        # 'a': not a macro key
+        lst._on_keycode(0x5A, True)        # F20: the last macro key
+        self.assertEqual(self.keys, [(osinput.VK_F13 + 1, True), (osinput.VK_F13 + 1, False), (osinput.VK_F13 + 7, True)])
+        self.assertEqual([e[1] for e in lst.events], [osinput.VK_F13 + 1, osinput.VK_F13 + 7])
+
+    def test_key_codes_of_all_macro_keys(self):
+        self.assertEqual(sorted(osinput.FKEY_CODES.values()), list(range(osinput.MAX_MACROS)))
+        self.assertEqual(osinput.FKEY_CODES[0x69], 0)
+
+    def test_keyboard_controller_never_made_off_the_main_thread(self):
+        """pynput reads the keyboard layout when its controller is created; macOS ends the process if
+        that happens off the main thread. It must fail cleanly instead."""
+        import threading
+        osinput.close()
+        result = []
+        def worker():
+            try: osinput._controller("kbd"); result.append("made")
+            except OSError as e: result.append(str(e))
+        t = threading.Thread(target=worker); t.start(); t.join()
+        self.assertIn("not ready", result[0])
+
+    def test_no_pynput_keyboard_listener(self):
+        src = (ROOT / "src" / "osinput.py").read_text(encoding="utf-8")
+        self.assertNotIn("keyboard.Listener(", src)
 
     def test_clicks_skip_injected(self):
         lst = self.make(); lst.stats_on = True
@@ -109,6 +129,15 @@ class PlatformTests(unittest.TestCase):
             self.assertTrue(a.acquired)
             self.assertFalse(b.acquired)
             a.release()
+
+
+class DisplayScaleTests(unittest.TestCase):
+    def test_retina_needs_no_correction(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('AEROX_SCALE', None)
+            self.assertIsNone(osplatform.display_scale(None, 1.0))
+        with patch.dict(os.environ, {'AEROX_SCALE': '1.5'}):
+            self.assertEqual(osplatform.display_scale(None, 1.0), 1.5)
 
 
 if __name__ == '__main__':

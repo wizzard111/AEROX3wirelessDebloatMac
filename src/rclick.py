@@ -68,11 +68,13 @@ def counts_text(cfg):
 
 
 class RightClickMultiplier:
-    def __init__(self, log=print):
+    def __init__(self, log=print, listener=None):
         self.log = lambda text, warn=False: log(text, warn)
         self.cfg = load_cfg()
         self._jobs = queue.Queue()
-        self._listener = None
+        self._shared = listener   # the app's InputListener (preferred: one reader for the mouse)
+        self._listener = None     # own listener, only when used standalone
+        self._attached = False
         self._worker = None
         self._down_t = {"left": None, "right": None}
 
@@ -85,6 +87,7 @@ class RightClickMultiplier:
 
     @property
     def active(self):
+        if self._shared is not None: return self._attached
         return self._listener is not None and self._listener.is_alive()
 
     def set_count(self, button, n):
@@ -106,11 +109,14 @@ class RightClickMultiplier:
                 import osinput
                 osinput.prepare_mouse()
                 self._buttons = {osinput.BTN_LEFT: "left", osinput.BTN_RIGHT: "right"}
-                self._listener = osinput.InputListener(on_button=self._on_button,
-                                                       on_error=lambda e: self.log("Multi-click: {0}".format(e), True))
-                self._listener.start()
+                if self._shared is not None:
+                    self._shared.set_button_handler(self._on_button); self._attached = True
+                else:
+                    self._listener = osinput.InputListener(on_button=self._on_button,
+                                                           on_error=lambda e: self.log("Multi-click: {0}".format(e), True))
+                    self._listener.start()
             except Exception as e:
-                self._listener = None
+                self._listener, self._attached = None, False
                 self.log("Multi-click: could not start ({0})".format(e), True)
                 return False
             if self._worker is None:
@@ -122,6 +128,8 @@ class RightClickMultiplier:
         return True
 
     def _unhook(self):
+        if self._attached:
+            self._shared.set_button_handler(None); self._attached = False
         if self._listener is not None:
             self._listener.stop()
             self._listener.join(timeout=1)
@@ -139,13 +147,15 @@ class RightClickMultiplier:
         self._unhook()
 
     # ---------- watcher
-    def _on_button(self, code, down):
+    def _on_button(self, code, down, t=None):
+        """t: event timestamp from the listener (exact even when events are read in batches)."""
         button = self._buttons.get(code)
         if not button or not self.cfg[f"{button}_on"]: return
+        if t is None: t = time.perf_counter()
         if down:
-            self._down_t[button] = time.perf_counter()
+            self._down_t[button] = t
         elif self._down_t[button] is not None:
-            n = is_tap((time.perf_counter() - self._down_t[button]) * 1000, self.cfg, button)
+            n = is_tap((t - self._down_t[button]) * 1000, self.cfg, button)
             self._down_t[button] = None
             if n:
                 self._jobs.put((button, n))

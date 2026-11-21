@@ -14,9 +14,13 @@ dist/
 # Local runtime data (config/logs live in ~/Library/Application Support/AeroxLite, but just in case)
 config.json
 *.log
+install.log
 log.txt
 
 # IDE / OS
 .vscode/
 .idea/
 .DS_Store
+
+# CI: release notes written for the GitHub release page
+release-notes.md

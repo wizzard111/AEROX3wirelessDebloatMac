@@ -43,6 +43,8 @@ VK_NAMES = {}
 for _k, _v in VK.items(): VK_NAMES.setdefault(_v, _k)
 for _i in range(MAX_MACROS): VK_NAMES[VK_F13 + _i] = f"f{13 + _i}"
 FKEY_NAMES = tuple(f"f{13 + i}" for i in range(MAX_MACROS))  # pynput Key attribute names
+FKEY_CODES = {VK[name]: i for i, name in enumerate(FKEY_NAMES)}   # macOS key code -> macro slot
+KEY_BACKEND = "key codes"   # shown in the log at start: tells this build from older ones
 CLICK = {"left": BTN_LEFT, "right": BTN_RIGHT, "middle": BTN_MIDDLE}
 STEP_DELAY = 0.015
 
@@ -56,10 +58,72 @@ def _pynput():
 
 
 # ---------------------------------------------------------------- Listener
+class KeyTap(threading.Thread):
+    """Listen-only Quartz event tap for key presses that reads key codes only.
+    pynput's keyboard.Listener reads the keyboard layout (TISCopyCurrentKeyboardInputSource) on its
+    own thread when it starts, and recent macOS versions end the process for that ("quit
+    unexpectedly" as soon as the sensor log or a macro needed the keyboard). Key codes need no layout.
+    on_key(keycode, down) is called for real key presses; events injected by a program (our macro
+    playback included) carry a process id and are skipped, as pynput does."""
+
+    def __init__(self, on_key):
+        super().__init__(daemon=True)
+        self.on_key = on_key
+        self.IS_TRUSTED = True
+        self._ready, self._stopping = threading.Event(), False
+        self._loop = self._tap = self._cb = None
+
+    def wait(self, timeout=5):
+        self._ready.wait(timeout)
+
+    def run(self):
+        try:
+            import Quartz as Q
+            mask = Q.CGEventMaskBit(Q.kCGEventKeyDown) | Q.CGEventMaskBit(Q.kCGEventKeyUp)
+
+            def handler(proxy, etype, event, refcon):
+                if etype in (Q.kCGEventTapDisabledByTimeout, Q.kCGEventTapDisabledByUserInput):
+                    if self._tap is not None: Q.CGEventTapEnable(self._tap, True)   # macOS paused it: resume
+                    return event
+                try:
+                    if Q.CGEventGetIntegerValueField(event, Q.kCGEventSourceUnixProcessID) == 0:
+                        self.on_key(Q.CGEventGetIntegerValueField(event, Q.kCGKeyboardEventKeycode),
+                                    etype == Q.kCGEventKeyDown)
+                except Exception:
+                    pass
+                return event
+            self._cb = handler   # keep the callback alive for as long as the tap exists
+            self._tap = Q.CGEventTapCreate(Q.kCGSessionEventTap, Q.kCGHeadInsertEventTap,
+                                           Q.kCGEventTapOptionListenOnly, mask, handler, None)
+            if self._tap is None:          # no Input Monitoring permission
+                self.IS_TRUSTED = False; return
+            source = Q.CFMachPortCreateRunLoopSource(None, self._tap, 0)
+            self._loop = Q.CFRunLoopGetCurrent()
+            Q.CFRunLoopAddSource(self._loop, source, Q.kCFRunLoopDefaultMode)
+            Q.CGEventTapEnable(self._tap, True)
+            self._ready.set()
+            while not self._stopping:
+                Q.CFRunLoopRunInMode(Q.kCFRunLoopDefaultMode, 1, False)
+        finally:
+            self._ready.set(); self._loop = None
+
+    def stop(self):
+        self._stopping = True
+        try:
+            if self._loop is not None:
+                import Quartz
+                Quartz.CFRunLoopStop(self._loop)
+        except Exception:
+            pass
+
+
 class InputListener(threading.Thread):
-    """Global listener. on_move() — pointer movement; on_key(code, down) — F13–F20 as
-    VK_F13 + slot; on_button(name, down) — 'left' | 'right' | 'middle'.
-    If stats_on: accumulates movement in counters and queues rare events (buttons/wheel/keys) in events.
+    """Global listener that runs only the event taps a feature needs right now:
+    the keyboard tap for macro keys F13-F20, the mouse tap for movement / buttons.
+    A mouse tap sees every pointer move, so without smart lighting or multi-click it is not running.
+    on_move() - pointer movement; on_key(code, down) - F13-F20 as VK_F13 + slot;
+    on_button(name, down, t) - 'left' | 'right' | 'middle'. Injected events are ignored.
+    If stats_on: accumulates movement in counters and queues rare events in events.
     """
     BTN = {"left": "Left click", "right": "Right click", "middle": "Middle click"}
 
@@ -67,6 +131,7 @@ class InputListener(threading.Thread):
         super().__init__(daemon=True)
         self.on_move, self.on_key, self.on_button, self.on_error = on_move, on_key, on_button, on_error
         self.stop_event = threading.Event()
+        self._changed = threading.Event()
         self.stats_lock = threading.Lock()
         self.stats_on = False
         self.n = self.dx = self.dy = self.wheel = 0
@@ -74,9 +139,20 @@ class InputListener(threading.Thread):
         self.t_first = self.t_last = 0.0
         self.events = deque(maxlen=300)
         self._down, self._last = {}, None
-        self._fkeys = {}
-        self._listeners = []
+        self._want = {"motion": on_move is not None, "keys": on_key is not None, "buttons": on_button is not None}
+        self._kbd = self._mouse = None
+        self._warned = False
         self.found = True
+
+    # ---- control (any thread)
+    def configure(self, motion=None, keys=None, buttons=None):
+        for k, v in (("motion", motion), ("keys", keys), ("buttons", buttons)):
+            if v is not None: self._want[k] = bool(v)
+        self._changed.set()
+
+    def set_button_handler(self, cb):
+        self.on_button = cb
+        self._changed.set()
 
     def take_motion(self):
         """Drain accumulated movement (called once per second)."""
@@ -86,44 +162,52 @@ class InputListener(threading.Thread):
             return n, dx, dy, w, (t1 - t0), tuple(self.pos)
 
     def stop(self):
-        self.stop_event.set()
+        self.stop_event.set(); self._changed.set()
 
+    # ---- thread: (re)starts the taps when the needs change, otherwise sleeps
     def run(self):
         try:
             keyboard, mouse = _pynput()
-            self._fkeys = {getattr(keyboard.Key, name).value.vk: i for i, name in enumerate(FKEY_NAMES)}
-            if self.on_key:  # the keyboard tap needs Input Monitoring; multi-click only listens to the mouse
-                self._listeners.append(keyboard.Listener(on_press=self._on_press, on_release=self._on_release))
-            self._listeners.append(mouse.Listener(on_move=self._on_move_ev, on_click=self._on_click,
-                                                  on_scroll=self._on_scroll))
-            for lst in self._listeners: lst.start()
-            for lst in self._listeners: lst.wait()
-            if not all(getattr(lst, "IS_TRUSTED", True) for lst in self._listeners):
-                if self.on_error: self.on_error(OSError(PERMISSION_HINT))
-            self.stop_event.wait()
+            while not self.stop_event.is_set():
+                self._changed.clear()
+                self._apply(keyboard, mouse)
+                self._changed.wait()
         except Exception as e:
             if self.on_error: self.on_error(e)
         finally:
-            for lst in self._listeners:
-                try: lst.stop()
+            for lst in (self._kbd, self._mouse):
+                try:
+                    if lst: lst.stop()
                 except Exception: pass
 
+    def _apply(self, keyboard, mouse):
+        w = self._want
+        need_kbd = w["keys"] and self.on_key is not None
+        need_mouse = w["motion"] or w["buttons"] or self.on_button is not None or self.stats_on
+        started = []
+        if need_kbd and self._kbd is None:
+            self._kbd = KeyTap(self._on_keycode)   # not pynput's keyboard.Listener: see KeyTap
+            self._kbd.start(); started.append(self._kbd)
+        elif not need_kbd and self._kbd is not None:
+            self._kbd.stop(); self._kbd = None
+        if need_mouse and self._mouse is None:
+            self._last = None
+            self._mouse = mouse.Listener(on_move=self._on_move_ev, on_click=self._on_click, on_scroll=self._on_scroll)
+            self._mouse.start(); started.append(self._mouse)
+        elif not need_mouse and self._mouse is not None:
+            self._mouse.stop(); self._mouse = None
+        for lst in started: lst.wait()
+        if started and not self._warned and not all(getattr(lst, "IS_TRUSTED", True) for lst in started):
+            self._warned = True
+            if self.on_error: self.on_error(OSError(PERMISSION_HINT))
+
     # ---- keyboard
-    def _slot(self, key):
-        vk = getattr(key, "vk", None)
-        if vk is None: vk = getattr(getattr(key, "value", None), "vk", None)
-        return self._fkeys.get(vk)
-
-    def _on_press(self, key, injected=False):
-        slot = self._slot(key)
-        if slot is None or injected: return
-        if self.on_key: self.on_key(VK_F13 + slot, True)
-        if self.stats_on: self.events.append(("key", VK_F13 + slot, None))
-
-    def _on_release(self, key, injected=False):
-        slot = self._slot(key)
-        if slot is None or injected: return
-        if self.on_key: self.on_key(VK_F13 + slot, False)
+    def _on_keycode(self, code, down):
+        """From KeyTap: real key presses as macOS key codes; only the macro keys F13-F20 matter."""
+        slot = FKEY_CODES.get(code)
+        if slot is None: return
+        if self.on_key: self.on_key(VK_F13 + slot, down)
+        if down and self.stats_on: self.events.append(("key", VK_F13 + slot, None))
 
     # ---- mouse
     def _on_move_ev(self, x, y, injected=False):
@@ -132,7 +216,7 @@ class InputListener(threading.Thread):
         if last is None: return
         dx, dy = self._last[0] - last[0], self._last[1] - last[1]
         if not (dx or dy): return
-        if self.on_move: self.on_move()
+        if self.on_move and self._want["motion"]: self.on_move()
         if self.stats_on:
             t = time.perf_counter()
             with self.stats_lock:
@@ -144,7 +228,7 @@ class InputListener(threading.Thread):
         if injected: return
         name = getattr(button, "name", str(button))
         if name not in self.BTN: return
-        if self.on_button: self.on_button(name, pressed)
+        if self.on_button: self.on_button(name, pressed, None)
         if self.stats_on:
             label = self.BTN[name]
             if pressed: self._down[label] = time.perf_counter()
@@ -165,6 +249,10 @@ _ctl = {}
 def _controller(kind):
     with _ctl_lock:
         if kind not in _ctl:
+            if kind == "kbd" and threading.current_thread() is not threading.main_thread():
+                # pynput reads the keyboard layout when the controller is created; off the main thread
+                # macOS ends the process for that. prepare_keyboard() creates it on the main thread.
+                raise OSError("the macro keyboard is not ready yet, try again in a moment")
             keyboard, mouse = _pynput()
             _ctl[kind] = keyboard.Controller() if kind == "kbd" else mouse.Controller()
         return _ctl[kind]
@@ -182,6 +270,12 @@ def _resolve(vk):
 
 def prepare_mouse():
     _controller("mouse")
+
+
+def prepare_keyboard():
+    """Create the keyboard controller for macro playback. Call on the main thread (see _controller)."""
+    try: _controller("kbd")
+    except Exception: pass
 
 
 def send_click(button, down):

@@ -1,14 +1,19 @@
 =====================================================================
   AEROX LITE FOR MAC - STEP BY STEP GUIDE
-  For the SteelSeries Aerox 3 Wireless mouse
+  For the SteelSeries Aerox 3 Wireless (and other SteelSeries mice)
 =====================================================================
 
 Aerox Lite is a small free program that replaces SteelSeries GG.
 It lets you change the mouse sensitivity, lighting, buttons and more,
 and shows the battery level in the menu bar.
 
-This download is for Macs with Apple Silicon (M1, M2, M3, M4 ...).
-To check: Apple menu  -> About This Mac -> "Chip: Apple M..."
+Two ways to install - pick one:
+  A) Apple Silicon Mac (M1, M2, M3, M4 ...): the ready-made disk image
+     AeroxLite-macos-arm64.dmg from the Releases page.
+  B) Any Mac, including Intel: the automatic installer
+     "Install Aerox Lite.command" from the source download.
+To check your Mac: Apple menu -> About This Mac -> "Chip" (Apple M...)
+or "Processor" (Intel).
 
 
 ---------------------------------------------------------------------
@@ -27,16 +32,31 @@ SteelSeries GG fights with Aerox Lite over the mouse settings.
 STEP 2. INSTALL THE APP
 ---------------------------------------------------------------------
 
-  1. Double-click AeroxLite-macos-arm64.zip to unzip it
-     (Safari may already have done this for you).
-  2. Drag "Aerox Lite" into the Applications folder.
+  A) DISK IMAGE (Apple Silicon)
+    1. Double-click AeroxLite-macos-arm64.dmg.
+    2. In the window that opens, drag "Aerox Lite" onto "Applications".
+
+  B) AUTOMATIC INSTALLER (any Mac, including Intel)
+    1. On the GitHub page click "Code" -> "Download ZIP", then
+       double-click the zip to unzip it.
+    2. RIGHT-click "Install Aerox Lite.command" -> "Open" -> "Open".
+       (Right-click is needed only the first time.)
+    3. A Terminal window opens and shows every step. Answer its
+       questions with Enter (= yes):
+         - install Python if it is missing (asks your Mac password;
+           nothing appears while typing, that is normal)
+         - quit SteelSeries GG if it is running
+    4. It builds the app (a few minutes) and then opens a window:
+       drag "Aerox Lite" onto "Applications".
+    5. It starts Aerox Lite for you. Continue with STEP 3, item 4.
 
 
 ---------------------------------------------------------------------
 STEP 3. OPEN IT THE FIRST TIME
 ---------------------------------------------------------------------
 
-The app is free and not registered with Apple, so macOS asks once.
+The app is free and not registered with Apple, so macOS asks once
+(only for the disk image; the installer's own build is not blocked).
 
   1. Open the Applications folder.
   2. RIGHT-click (or Control-click) "Aerox Lite" and choose "Open".
@@ -48,7 +68,12 @@ The app is free and not registered with Apple, so macOS asks once.
     - Scroll down. Next to "Aerox Lite was blocked", click
       "Open Anyway", then confirm with your password.
 
-  After this, it opens normally with a double-click.
+  4. Aerox Lite now asks for two permissions in macOS dialogs:
+       - Input Monitoring ("receive keystrokes")
+       - Accessibility
+     In each one click "Open System Settings" and switch Aerox Lite ON.
+     Then quit Aerox Lite (Cmd + Q) and open it again.
+     Needed for macros, multi-click and smart lighting only.
 
 
 ---------------------------------------------------------------------
@@ -88,12 +113,31 @@ Changes are applied to the mouse right away.
     - ZONES: click a zone to pick its color.
     - OPTIONS: brightness and effect speed.
 
-  BUTTONS (left side, "ACTIONS")
+  BUTTONS (left side)
     - Click the box next to a button and choose what it should do:
       another button, a keyboard key, a media key, or a macro.
-    - "RESET BINDINGS" puts everything back to normal.
+    - "Reset" puts everything back to normal.
 
-  >>> When you are happy, click "SAVE TO MOUSE" (bottom right). <<<
+  ANOTHER STEELSERIES MOUSE (Rival, Sensei, Prime, Aerox 5/9, ...)
+    - Just plug it in. Aerox Lite recognises 65 more SteelSeries models by
+      itself; there is nothing extra to download.
+    - The window then looks like the Aerox 3 one, made for that mouse:
+      a picture of it, its buttons on the left (choose another
+      button, a key, a media key or a macro for each), and the tabs
+      Settings (sensitivity, polling rate; battery and sleep timer on
+      a wireless mouse), Lighting (each colour zone) and Modules.
+      Changes apply at once; "Save to mouse" keeps them inside the mouse.
+    - The model name appears under "Aerox Lite" at the top left.
+
+  LIGHT OR DARK
+    - The switch at the top left (moon / sun) changes between the dark
+      and the light look. Your choice is remembered.
+
+  WINDOW SIZE
+    - Text and buttons too small or too big? Use "A-" and "A+" at the
+      top right of the window (50% to 200%). The size is remembered.
+
+  >>> When you are happy, click "Save to mouse" (bottom right). <<<
   This stores the settings inside the mouse, so they keep working
   on any computer, even without Aerox Lite.
 
@@ -106,9 +150,13 @@ STEP 6. EVERYDAY USE
     the menu bar (top right) and shows the battery level there.
   - Click the Dock icon or the menu bar icon -> "Open" to bring the
     window back.
-  - To quit completely: menu bar icon -> "Quit", the "QUIT" button
+  - To quit completely: menu bar icon -> "Quit", the power button
     at the top of the window, or press Cmd + Q.
   - Tick "Start on login" (bottom left) to start it automatically.
+  - To remove Aerox Lite: double-click "Uninstall Aerox Lite.command".
+    It asks what to remove: 1) only the app, or 2) everything - the app,
+    its settings and the downloaded folder, including the installer
+    and the uninstaller.
 
 
 ---------------------------------------------------------------------
@@ -117,6 +165,7 @@ EXTRAS (OPTIONAL) - NEED TWO PERMISSIONS
 
 Macros, multi-click and smart lighting need permission to see and
 send mouse and keyboard input. Settings and lighting work without it.
+Aerox Lite asks for them itself (STEP 3). If you skipped the dialogs:
 
   1. Apple menu -> System Settings -> Privacy & Security.
   2. Open "Input Monitoring" and switch Aerox Lite ON.
@@ -126,7 +175,7 @@ send mouse and keyboard input. Settings and lighting work without it.
   4. Quit Aerox Lite (Cmd + Q) and open it again.
 
   MACROS - one button does a sequence of keys
-    1. Under ACTIONS, next to "Macro editor", click "OPEN".
+    1. In BUTTONS (left side), click "Macros...".
     2. Click "+ NEW", type the steps, click "SAVE".
        The help on the right shows what you can type, for example:
            cmd+c
@@ -134,7 +183,7 @@ send mouse and keyboard input. Settings and lighting work without it.
            cmd+v
     3. Close the editor. Click the box next to a mouse button and
        choose Macros -> your macro.
-    4. Click "SAVE TO MOUSE".
+    4. Click "Save to mouse".
     Up to 8 macros. They only work while Aerox Lite is running.
 
   MODULES tab
@@ -148,6 +197,15 @@ send mouse and keyboard input. Settings and lighting work without it.
 ---------------------------------------------------------------------
 TROUBLESHOOTING
 ---------------------------------------------------------------------
+
+  "...could not be executed because you do not have appropriate
+  access privileges" when opening Install Aerox Lite.command
+    - The file lost its "executable" flag while being copied.
+      Open Terminal, type  cd  and a space, drag the unzipped folder
+      into the Terminal window, press Enter, then paste:
+          chmod +x *.command *.sh
+      Now double-click the installer again. Or start it directly:
+          bash "Install Aerox Lite.command"
 
   "mouse not found"
     - Make sure the mouse is switched on and the dongle is plugged in.
@@ -166,7 +224,7 @@ TROUBLESHOOTING
       Then open the app again.
 
   Settings are lost after restarting the computer
-    - You forgot to click "SAVE TO MOUSE".
+    - You forgot to click "Save to mouse".
 
   Still stuck?
     - Open a new issue on the GitHub page of this project and attach

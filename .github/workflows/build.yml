@@ -24,36 +24,37 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            requirements.txt
-            requirements-build.txt
+            packaging/requirements.txt
+            packaging/requirements-build.txt
 
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt -r requirements-build.txt
+        run: python -m pip install -r packaging/requirements.txt -r packaging/requirements-build.txt
 
       - name: Run tests
         run: python -X utf8 -m unittest discover -s tests -v
 
       - name: Build app
-        run: python -X utf8 -m PyInstaller --clean --noconfirm AeroxLite.spec
+        run: python -X utf8 -m PyInstaller --clean --noconfirm --distpath build/dist --workpath build/work packaging/macos/AeroxLite.spec
 
-      - name: Package
-        run: |
-          # Ad-hoc signature: required on Apple Silicon, not a Developer ID (Gatekeeper still asks once).
-          codesign --force --deep --sign - "dist/Aerox Lite.app"
-          mkdir -p "pkg/Aerox Lite"
-          ditto "dist/Aerox Lite.app" "pkg/Aerox Lite/Aerox Lite.app"
-          cp HOW-TO-INSTALL.txt LICENSE "pkg/Aerox Lite/"
-          ditto -c -k --keepParent "pkg/Aerox Lite" AeroxLite-macos-arm64.zip
+      - name: Self-test the built app
+        run: '"build/dist/Aerox Lite.app/Contents/MacOS/Aerox Lite" --self-test'
+
+      - name: Package (drag-to-Applications disk image)
+        run: packaging/macos/make-dmg.sh AeroxLite-macos-arm64.dmg
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: AeroxLite-macos-arm64
-          path: AeroxLite-macos-arm64.zip
+          path: AeroxLite-macos-arm64.dmg
+
+      - name: Release notes for this version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: python packaging/release_notes.py "${{ github.ref_name }}"
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: AeroxLite-macos-arm64.zip
-          body_path: CHANGELOG.md
+          files: AeroxLite-macos-arm64.dmg
+          body_path: release-notes.md
