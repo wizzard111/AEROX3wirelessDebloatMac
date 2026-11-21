@@ -1,3 +1,7 @@
+<img width="1475" height="862" alt="image" src="https://github.com/user-attachments/assets/6cd53ce7-1151-4ff4-b7e4-c25b4fe7fa39" />
+<img width="1473" height="842" alt="image" src="https://github.com/user-attachments/assets/8179dc89-d0b7-45d2-b715-19dbc80ed94a" />
+<img width="1465" height="859" alt="image" src="https://github.com/user-attachments/assets/d0b3a518-fe54-4404-91c2-44ada9d8d999" />
+
 # Aerox Lite for macOS
 
 *In collaboration with [Claude](https://claude.ai).*
