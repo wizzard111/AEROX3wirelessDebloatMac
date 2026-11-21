@@ -32,6 +32,19 @@ The full log is saved as `install.log`.
 
 **Permissions.** On first launch Aerox Lite asks macOS for **Input Monitoring** and **Accessibility**. Click **Open System Settings** in each dialog, switch Aerox Lite on, then quit and reopen the app. They are needed only for macros, multi-click and smart lighting; mouse settings, lighting and battery work without them. A rebuilt app counts as a new app, so permissions may have to be granted again after an update.
 
+## Disk space, memory and CPU
+
+| | |
+|---|---|
+| Download | `AeroxLite-macos-arm64.dmg` 14 MB |
+| Settings and logs | settings a few KB; log files at most 1 MB |
+
+Memory and CPU have not been measured on macOS yet. The same code, measured on Windows and Linux, uses
+41–56 MB of memory and about 0% CPU (10–16 ms of CPU time per minute) whether it sits in the tray or
+its window is open. The window is built only when you open it, and the app sleeps until something
+happens (a setting, the mouse, a battery check every 30 s). Software lighting effects (breathing, wave,
+colour cycle) are the exception: they keep sending colours to the mouse while they run.
+
 ## Build from source
 
 Run `Install Aerox Lite.command`. It does everything described above.
