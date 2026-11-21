@@ -5,6 +5,11 @@
   dark on the Lighting tab until the app was restarted. Only swatches that show a theme colour (an
   "off" reactive colour) follow the theme now; the colours you choose never change.
 
+### Size and resource use
+- Download: AeroxLite-macos-arm64.dmg 14 MB.
+- Memory and CPU are not measured on macOS yet; the same code uses 41-56 MB and about 0% CPU on
+  Windows and Linux, in the tray or with the window open.
+
 ## V5.0.1
 
 ### Highlights
