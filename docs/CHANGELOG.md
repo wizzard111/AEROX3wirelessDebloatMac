@@ -1,5 +1,15 @@
 # Changelog
 
+## V5.1.0
+
+- **Panel animation:** a small looping drawing in the free space at the bottom of the left panel, one
+  for the light theme and one for the dark, painted in the theme colours. It plays only while the
+  window is open and in front (about 1% of one CPU core); with another program in front it holds
+  still, and in the tray it uses no CPU and no memory for images. Hidden when the log is open or there
+  is no room. Preview: `docs/images/panel-animation-preview.png`.
+- **App icon:** the app in Finder, Launchpad and the Dock now shows the mouse mark of the window header
+  instead of the default icon.
+
 ## V5.0.2
 - Fixed: after switching from the light to the dark theme, colour swatches set to white were drawn
   dark on the Lighting tab until the app was restarted. Only swatches that show a theme colour (an

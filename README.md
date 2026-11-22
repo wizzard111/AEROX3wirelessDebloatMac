@@ -48,8 +48,12 @@ The full log is saved as `install.log`.
 Memory and CPU have not been measured on macOS yet. The same code, measured on Windows and Linux, uses
 41–56 MB of memory and about 0% CPU (10–16 ms of CPU time per minute) whether it sits in the tray or
 its window is open. The window is built only when you open it, and the app sleeps until something
-happens (a setting, the mouse, a battery check every 30 s). Software lighting effects (breathing, wave,
-colour cycle) are the exception: they keep sending colours to the mouse while they run.
+happens (a setting, the mouse, a battery check every 30 s).
+
+Two things run on their own. The small animation at the bottom of the left panel plays only while the
+window is open **and** in front (about 1% of one CPU core, measured on Windows); as soon as you switch to
+another app it stops, and in the menu bar it holds no timer and no images at all. Software lighting
+effects (breathing, wave, colour cycle) keep sending colours to the mouse while they run.
 
 ## Build from source
 
@@ -246,8 +250,8 @@ python3 -X utf8 -m unittest discover -s tests -v
 ### Releasing
 
 ```
-git tag v5.0.2
-git push origin v5.0.2
+git tag v5.1.0
+git push origin v5.1.0
 ```
 
 The workflow runs the tests, builds the app on Apple Silicon, self-tests it and attaches `AeroxLite-macos-arm64.dmg` to a GitHub Release.

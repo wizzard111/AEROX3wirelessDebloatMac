@@ -74,5 +74,57 @@ class InPlaceTests(unittest.TestCase):
         self.assertEqual(frames[-1], 0.0)
 
 
+@unittest.skipIf(_root is None, "no display")
+class MascotTests(unittest.TestCase):
+    """The panel animation: frames only while shown, a timer only while playing, theme colours."""
+    def setUp(self):
+        ui_theme.set_theme("dark"); ui_theme.set_scale(1.0)
+        self.top = tk.Toplevel(_root, bg=ui_theme.PAL["PANEL"])
+        self.m = ui_theme.Mascot(self.top); self.m.pack()
+
+    def tearDown(self):
+        self.m.stop(free=True); self.top.destroy()
+
+    def test_assets_decode(self):
+        import mascot_art, base64, io
+        from PIL import Image
+        for name, ((w, h), times, data) in mascot_art.MASCOT.items():
+            strip = Image.open(io.BytesIO(base64.b64decode("".join(data))))
+            self.assertEqual(strip.size, (w * len(times), h), name)
+            self.assertEqual(h, ui_theme.Mascot.HEIGHT)
+
+    def test_fits_the_free_space(self):
+        m, full = self.m, ui_theme.Mascot.HEIGHT
+        self.assertEqual(m.fit(1000, 1000), full)            # never larger than at 100 %
+        self.assertEqual(m.fit(1000, 100), 100)              # shrinks to the free height
+        self.assertEqual(m.fit(180, 1000), 180 * 150 // 270)  # and to the free width (dark: 270 x 150)
+        self.assertEqual(m.fit(1000, ui_theme.Mascot.MIN_HEIGHT - 1), 0)  # too small: not shown
+        m.set_height(100); m.run(False)
+        self.assertEqual((m._frames[0].width(), m._frames[0].height()), (180, 100))
+        self.assertIsNone(m._after)
+
+    def test_nothing_until_shown(self):
+        self.assertIsNone(self.m._frames); self.assertIsNone(self.m._after)
+
+    def test_play_hold_free(self):
+        self.m.run(True)
+        self.assertEqual(len(self.m._frames), len(__import__("mascot_art").MASCOT["dark"][1]))
+        self.assertIsNotNone(self.m._after)
+        self.m.run(False)                        # held still: picture stays, no timer
+        self.assertIsNotNone(self.m._frames); self.assertIsNone(self.m._after)
+        self.m.run(True); self.m.stop(free=True)  # tray: no timer, no images
+        self.assertIsNone(self.m._frames); self.assertIsNone(self.m._after)
+        self.assertEqual(str(self.m.cget("image")), "")
+
+    def test_follows_theme_and_size(self):
+        self.m.run(False)
+        dark = self.m._frames
+        ui_theme.set_theme("light"); self.m.configure(bg=ui_theme.PAL["PANEL"]); self.m.refresh()
+        self.assertIsNot(self.m._frames, dark)
+        self.assertEqual(len(self.m._frames), len(__import__("mascot_art").MASCOT["light"][1]))
+        ui_theme.set_scale(1.5); self.m.refresh()
+        self.assertEqual(self.m._frames[0].height(), round(ui_theme.Mascot.HEIGHT * 1.5))
+
+
 if __name__ == '__main__':
     unittest.main()

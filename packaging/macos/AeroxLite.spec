@@ -18,14 +18,14 @@ def trim_datas(datas):
     """Tcl's time-zone database is only used by Tcl's own clock command, which the app does not use."""
     return [d for d in datas if '_tcl_data/tzdata' not in d[0].replace('\\', '/')]
 
-VERSION = '5.0.2'
+VERSION = '5.1.0'
 
 a = Analysis(
     [os.path.join(SRC, 'aerox_lite.py')],
     pathex=[SRC],
     binaries=[],
     datas=[],
-    hiddenimports=['generic', 'generic_ui', 'model_art', 'rivalcfg', 'rclick', 'smartbattery', 'helpers', 'osinput', 'osplatform', 'hid',
+    hiddenimports=['generic', 'generic_ui', 'model_art', 'mascot_art', 'rivalcfg', 'rclick', 'smartbattery', 'helpers', 'osinput', 'osplatform', 'hid',
                    'PIL._tkinter_finder', 'pystray._darwin',
                    'pynput.keyboard._darwin', 'pynput.mouse._darwin', 'ApplicationServices'],
     hookspath=[],
@@ -67,7 +67,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Aerox Lite.app',
-    icon=None,
+    icon=os.path.join(SPECPATH, 'AeroxLite.icns'),  # the mouse mark of the window header (make_icon.py)
     bundle_identifier='io.github.aeroxlite',
     version=VERSION,
     info_plist={
