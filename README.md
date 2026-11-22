@@ -1,6 +1,6 @@
-<img width="1475" height="862" alt="image" src="https://github.com/user-attachments/assets/6cd53ce7-1151-4ff4-b7e4-c25b4fe7fa39" />
-<img width="1473" height="842" alt="image" src="https://github.com/user-attachments/assets/8179dc89-d0b7-45d2-b715-19dbc80ed94a" />
-<img width="1465" height="859" alt="image" src="https://github.com/user-attachments/assets/d0b3a518-fe54-4404-91c2-44ada9d8d999" />
+<img width="1180" height="690" alt="Aerox Lite with a Rival 600: every lighting zone in its own colour (dark theme)" src="docs/images/screenshot-lighting.png" />
+<img width="1215" height="734" alt="Aerox Lite with an Aerox 3 Wireless (dark theme)" src="docs/images/screenshot-dark.png" />
+<img width="1180" height="690" alt="Aerox Lite with a Rival 310 (light theme)" src="docs/images/screenshot-light.png" />
 
 # Aerox Lite for macOS
 
