@@ -211,6 +211,9 @@ UPDATING
   up a lasting signature for Aerox Lite. macOS then asks once more for
   Input Monitoring and Accessibility; after that they are kept across
   all updates.
+  Disk space: the updater itself is tiny. On an Intel Mac it keeps a
+  build folder of roughly 150-300 MB in ~/Library/Caches/AeroxLite-updater
+  so the next update is faster; you may delete it at any time.
 
 
 ---------------------------------------------------------------------

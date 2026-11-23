@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **Updater:** "Update Aerox Lite" in Applications (added by the first run of `Update Aerox Lite.command`,
+  which is also on the disk image). It checks GitHub for a newer version, backs up the settings,
+  downloads the release (Apple Silicon) or builds it (Intel), checks that the new app starts, replaces
+  the old one, makes sure every setting is still there and starts the app again.
+- **Permissions kept after updates:** the app is signed with a free local certificate made once (the
+  Mac password is asked once), so macOS keeps Input Monitoring and Accessibility across updates.
+- Disk space: the updater is about 23 KB; on Intel Macs it keeps a build folder of roughly 150-300 MB
+  in `~/Library/Caches/AeroxLite-updater` (may be deleted at any time).
+
 ## V5.1.0
 
 - **Panel animation:** a small looping drawing in the free space at the bottom of the left panel, one

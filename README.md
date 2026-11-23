@@ -36,7 +36,32 @@ The device protocol is based on the open-source [rivalcfg](https://github.com/fl
 
 The full log is saved as `install.log`.
 
-**Permissions.** On first launch Aerox Lite asks macOS for **Input Monitoring** and **Accessibility**. Click **Open System Settings** in each dialog, switch Aerox Lite on, then quit and reopen the app. They are needed only for macros, multi-click and smart lighting; mouse settings, lighting and battery work without them. A rebuilt app counts as a new app, so permissions may have to be granted again after an update.
+**Permissions.** On first launch Aerox Lite asks macOS for **Input Monitoring** and **Accessibility**. Click **Open System Settings** in each dialog, switch Aerox Lite on, then quit and reopen the app. They are needed only for macros, multi-click and smart lighting; mouse settings, lighting and battery work without them. After updates they are kept (see **Update**).
+
+## Update
+
+The app has an updater. Open **Update Aerox Lite** in Applications or Launchpad. It:
+
+1. Asks GitHub whether a newer version exists. If not, it says so and stops.
+2. Backs up your settings to `~/Library/Application Support/AeroxLite-updater/backups` (the last 3 backups are kept).
+3. Apple Silicon: downloads the new disk image and checks its SHA-256. Intel: downloads the source code and builds the app, like the installer.
+4. Signs the new app (see below) and checks that it starts, and only then replaces Aerox Lite in Applications; nothing of the old version is left.
+5. Checks that every setting is still there (restores from the backup otherwise) and starts the app again if it was running.
+
+**The first time**, "Update Aerox Lite" is not in Applications yet: double-click **Update Aerox Lite.command** (on the disk image or in the source download) once, allowing it like the installer. It adds "Update Aerox Lite" to Applications; later updates start from there without any macOS warning.
+
+**Permissions stay after updates.** macOS keeps Input Monitoring and Accessibility only for an app signed with the same certificate every time. So the first update makes a free local code-signing certificate (in its own keychain) and asks for your Mac password once, to trust it for code signing. macOS then asks once more for the two permissions; from then on they are kept. If you do not enter the password, the update still works, but the permissions have to be switched on again after each update.
+
+Options: `--check` (exit code 2 = update available), `--force`, `--yes`, `--package FILE`.
+
+**Disk space used by the updater:**
+
+| | |
+|---|---|
+| The updater | one script of about 23 KB, plus the "Update Aerox Lite" app (a few KB) |
+| Settings backups | a few KB (the last 3) |
+| Signing certificate | a few KB (`~/Library/Application Support/reflex-local-signing`, shared with HandTrack) |
+| Intel Macs only: build folder | roughly 150–300 MB in `~/Library/Caches/AeroxLite-updater` (the source code and its Python libraries, kept so the next update does not download them again). Delete the folder to free the space; the next update then takes longer. |
 
 ## Disk space, memory and CPU
 
@@ -79,6 +104,7 @@ To remove the app, run **Uninstall Aerox Lite.command**. It quits and removes th
 | Path | Contents |
 |---|---|
 | `Install Aerox Lite.command`, `Uninstall Aerox Lite.command` | Installer and uninstaller |
+| `Update Aerox Lite.command` | Updater (also on the disk image; "Update Aerox Lite" in Applications after the first run) |
 | `src/` | Application source code |
 | `packaging/macos/` | PyInstaller spec, build, disk-image and run scripts |
 | `packaging/requirements*.txt` | Python dependencies |
