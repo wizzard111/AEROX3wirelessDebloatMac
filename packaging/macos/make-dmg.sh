@@ -14,7 +14,7 @@ codesign --force --deep --sign - "$APP"
 STAGE=$(mktemp -d)
 ditto "$APP" "$STAGE/Aerox Lite.app"
 ln -s /Applications "$STAGE/Applications"
-cp HOW-TO-INSTALL.txt "Uninstall Aerox Lite.command" "$STAGE/"
+cp HOW-TO-INSTALL.txt "Uninstall Aerox Lite.command" "Update Aerox Lite.command" "$STAGE/"
 rm -f "$OUT"
 hdiutil create -volname "Aerox Lite" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$OUT" >/dev/null
 rm -rf "$STAGE"
