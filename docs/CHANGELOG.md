@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## V5.2.0
 
 - **Updater:** "Update Aerox Lite" in Applications (added by the first run of `Update Aerox Lite.command`,
   which is also on the disk image). It checks GitHub for a newer version, backs up the settings,

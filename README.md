@@ -276,8 +276,8 @@ python3 -X utf8 -m unittest discover -s tests -v
 ### Releasing
 
 ```
-git tag v5.1.0
-git push origin v5.1.0
+git tag v5.2.0
+git push origin v5.2.0
 ```
 
 The workflow runs the tests, builds the app on Apple Silicon, self-tests it and attaches `AeroxLite-macos-arm64.dmg` to a GitHub Release.

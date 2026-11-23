@@ -18,7 +18,7 @@ def trim_datas(datas):
     """Tcl's time-zone database is only used by Tcl's own clock command, which the app does not use."""
     return [d for d in datas if '_tcl_data/tzdata' not in d[0].replace('\\', '/')]
 
-VERSION = '5.1.0'
+VERSION = '5.2.0'
 
 a = Analysis(
     [os.path.join(SRC, 'aerox_lite.py')],
