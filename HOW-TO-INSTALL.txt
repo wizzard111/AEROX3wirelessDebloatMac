@@ -198,14 +198,19 @@ Aerox Lite asks for them itself (STEP 3). If you skipped the dialogs:
 UPDATING
 ---------------------------------------------------------------------
 
-  Double-click "Update Aerox Lite.command" (from the disk image or the
-  source download; the first time: right-click -> "Open" -> "Open").
+  Launchpad / Applications -> "Update Aerox Lite".
   It checks GitHub for a newer version, backs up your settings, replaces
   Aerox Lite in Applications and starts it again. Your settings, macros
   and lighting are kept. On an Intel Mac it builds the new version, like
-  the installer did. If macros stop working after the update, switch
-  Aerox Lite off and on again under Privacy & Security -> Input Monitoring
-  and Accessibility.
+  the installer did.
+  The first time, "Update Aerox Lite" is not there yet: double-click
+  "Update Aerox Lite.command" (on the disk image or in the source
+  download) once, allowing it like the installer. It then adds
+  "Update Aerox Lite" to Applications.
+  Permissions: the first update asks for your Mac password once, to set
+  up a lasting signature for Aerox Lite. macOS then asks once more for
+  Input Monitoring and Accessibility; after that they are kept across
+  all updates.
 
 
 ---------------------------------------------------------------------

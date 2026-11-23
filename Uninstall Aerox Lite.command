@@ -39,11 +39,16 @@ if [ -f "$AGENT" ]; then
     launchctl bootout "gui/$(id -u)/$BUNDLE_ID" 2>/dev/null
     rm -f "$AGENT"; echo "Login item removed."
 fi
+# The updater's launcher (its backups of the settings go with option 2).
+rm -rf "/Applications/Update Aerox Lite.app" "$HOME/Applications/Update Aerox Lite.app" \
+       "$HOME/Library/Application Support/AeroxLite-updater/Update Aerox Lite.command" \
+       "$HOME/Library/Caches/AeroxLite-updater" 2>/dev/null
 tccutil reset ListenEvent "$BUNDLE_ID" >/dev/null 2>&1 && echo "Input Monitoring permission reset."
 tccutil reset Accessibility "$BUNDLE_ID" >/dev/null 2>&1 && echo "Accessibility permission reset."
 
 if [ "$choice" = "2" ]; then
     [ -d "$SETTINGS" ] && rm -rf "$SETTINGS" && echo "Settings removed."
+    rm -rf "$HOME/Library/Application Support/AeroxLite-updater"
     if is_package; then
         cd "$HOME" || exit 1
         rm -rf "$DIR" && echo "Removed the folder $DIR"

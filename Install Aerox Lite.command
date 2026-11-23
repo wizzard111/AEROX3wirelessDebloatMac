@@ -83,6 +83,10 @@ chmod +x packaging/macos/*.sh 2>/dev/null
 rm -rf build
 PYTHON="$PY" packaging/macos/build.sh || fail "the build did not succeed (see the messages above)"
 
+# A lasting local signature, so macOS keeps the app's permissions after updates (the Mac password is
+# asked once), and "Update Aerox Lite" in Applications for later updates.
+bash "Update Aerox Lite.command" --setup --sign "build/dist/Aerox Lite.app"
+
 bold "Creating the installer window"
 packaging/macos/make-dmg.sh "build/AeroxLite.dmg" || fail "could not create the disk image"
 
